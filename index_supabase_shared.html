@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Passport</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #E7E0C9;
+    --paper-light: #F2ECDA;
+    --paper-dark: #DCD3B4;
+    --ink: #26221A;
+    --ink-soft: #5B5646;
+    --navy: #202C40;
+    --navy-light: #33415a;
+    --stamp: #A23F27;
+    --stamp-soft: #c2603f;
+    --sage: #56694F;
+    --line: rgba(38,34,26,0.22);
+    --line-soft: rgba(38,34,26,0.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--paper);
+    background-image:
+      radial-gradient(rgba(38,34,26,0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+    color: var(--ink);
+    font-family: 'Source Serif 4', serif;
+    min-height:100vh;
+  }
+  h1,h2,h3,h4{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'Special Elite', monospace; }
+  button{ font-family:'Source Serif 4', serif; cursor:pointer; }
+  input, select, textarea{ font-family:'Source Serif 4', serif; }
+  ::selection{ background: var(--stamp-soft); color: var(--paper-light); }
+
+  #app{ max-width: 1040px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* ---------- Header ---------- */
+  .rp-header{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    padding: 34px 0 18px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .rp-brand{ display:flex; align-items:center; gap:14px; }
+  .rp-mark{
+    width:52px; height:52px; border-radius:50%;
+    border: 2px solid var(--navy);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; flex-shrink:0;
+    background: var(--paper-light);
+  }
+  .rp-mark::before{
+    content:''; position:absolute; inset:5px; border:1px solid var(--navy); border-radius:50%;
+    opacity:0.5;
+  }
+  .rp-mark svg{ width:24px; height:24px; }
+  .rp-brand-text h1{ font-size: 28px; color: var(--navy); line-height:1; }
+  .rp-brand-text .sub{
+    font-family:'Special Elite', monospace; font-size:11px; letter-spacing:0.04em;
+    color: var(--ink-soft); margin-top:5px;
+  }
+  .rp-who{ text-align:right; font-size:13px; color:var(--ink-soft); }
+  .rp-who .name{ font-family:'Fraunces', serif; font-size:16px; color:var(--ink); display:block; }
+  .rp-switch{
+    margin-top:6px; background:none; border:none; text-decoration:underline;
+    color:var(--stamp); font-size:12.5px; padding:0;
+  }
+
+  /* ---------- Nav ---------- */
+  .rp-nav{
+    display:flex; gap: 4px; padding: 14px 0 26px; flex-wrap:wrap;
+  }
+  .rp-nav button{
+    background:none; border:1px solid var(--line); border-bottom:none;
+    padding: 9px 18px; font-size: 14.5px; color: var(--ink-soft);
+    border-radius: 6px 6px 0 0; position:relative; top:1px;
+  }
+  .rp-nav button.active{
+    background: var(--paper-light); color: var(--ink); border-color: var(--ink);
+    font-weight:600;
+  }
+
+  /* ---------- Onboarding ---------- */
+  .rp-onboard{ padding: 30px 0; }
+  .rp-onboard > p.lede{ max-width: 520px; color: var(--ink-soft); font-size:16px; margin-bottom: 30px; }
+  .rp-gates{ display:grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 620px){ .rp-gates{ grid-template-columns: 1fr; } }
+  .rp-gate{
+    border: 1.5px solid var(--ink); border-radius: 4px; padding: 26px;
+    background: var(--paper-light); text-align:left; transition: transform .15s ease;
+  }
+  .rp-gate:hover{ transform: translateY(-2px); }
+  .rp-gate h3{ font-size:20px; margin-bottom:8px; }
+  .rp-gate p{ color:var(--ink-soft); font-size:14.5px; margin: 0 0 18px; line-height:1.5; }
+  .rp-gate button{
+    background: var(--navy); color: var(--paper-light); border:none;
+    padding: 10px 20px; border-radius: 3px; font-size:14px;
+  }
+  .rp-gate button:hover{ background: var(--navy-light); }
+
+  .rp-panel{
+    border: 1.5px solid var(--ink); border-radius: 4px; background: var(--paper-light);
+    padding: 24px; margin-top: 20px;
+  }
+  .rp-panel h4{ font-size:15px; margin-bottom: 14px; }
+  .rp-field{ margin-bottom: 14px; }
+  .rp-field label{ display:block; font-size:12.5px; color: var(--ink-soft); margin-bottom: 5px; }
+  .rp-field input, .rp-field select, .rp-field textarea{
+    width:100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 3px;
+    background: var(--paper-light); font-size: 15px; color: var(--ink);
+  }
+  .rp-field textarea{ resize: vertical; min-height: 70px; }
+  .rp-btn{
+    background: var(--stamp); color: var(--paper-light); border:none;
+    padding: 10px 20px; border-radius: 3px; font-size: 14px;
+  }
+  .rp-btn:hover{ background: var(--stamp-soft); }
+  .rp-btn.secondary{ background:none; border:1px solid var(--ink); color:var(--ink); }
+  .rp-btn.secondary:hover{ background: var(--paper-dark); }
+  .rp-profile-list{ display:flex; flex-direction:column; gap:8px; margin-bottom: 16px; }
+  .rp-profile-pick{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 10px 14px; border:1px solid var(--line); border-radius:3px; background: var(--paper);
+  }
+  .rp-profile-pick button{ background:none; border:1px solid var(--ink); border-radius:3px; padding:5px 12px; font-size:13px; }
+  .rp-profile-pick button:hover{ background: var(--ink); color: var(--paper-light); }
+
+  /* ---------- Toolbar / search / genre tabs ---------- */
+  .rp-toolbar{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-bottom: 18px; }
+  .rp-search{
+    flex:1; min-width: 180px; padding: 10px 14px; border: 1px solid var(--ink); border-radius: 3px;
+    background: var(--paper-light); font-size: 15px;
+  }
+  .rp-genres{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 22px; }
+  .rp-genre-tab{
+    background: none; border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px; font-size: 13px; color: var(--ink-soft);
+  }
+  .rp-genre-tab.active{ background: var(--sage); border-color: var(--sage); color: var(--paper-light); }
+
+  /* ---------- Catalog grid ---------- */
+  .rp-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 16px; }
+  .rp-card{
+    border: 1px solid var(--ink); border-radius: 3px; background: var(--paper-light);
+    position:relative; min-height: 150px; overflow:hidden;
+  }
+  .rp-card-click{
+    background:none; border:none; padding:16px; margin:0; width:100%; font:inherit; color:inherit;
+    display:flex; flex-direction:column; gap:8px; text-align:left; cursor:pointer; min-height:150px;
+  }
+  .rp-card-click:hover{ background: var(--paper); }
+  .rp-card-actions{ position:absolute; top:8px; right:8px; display:flex; gap:6px; z-index:2; }
+  .rp-fav-btn, .rp-share-btn{
+    width:29px; height:29px; border-radius:50%; border:1px solid var(--ink); background: var(--paper-light);
+    display:flex; align-items:center; justify-content:center; font-size:14px; color: var(--ink-soft);
+    padding:0; line-height:1;
+  }
+  .rp-fav-btn.on{ color: var(--stamp); border-color: var(--stamp); }
+  .rp-fav-btn:hover, .rp-share-btn:hover{ background: var(--paper-dark); }
+  .rp-card .rp-cover{
+    width: calc(100% + 32px); margin: -16px -16px 2px; height: 130px; object-fit: cover;
+    border-bottom: 1px solid var(--ink); border-radius: 3px 3px 0 0;
+  }
+  .rp-cover-modal{
+    width: 100%; max-height: 220px; object-fit: cover; border: 1px solid var(--ink);
+    border-radius: 3px; margin-bottom: 14px;
+  }
+  .rp-card .tag{
+    align-self:flex-start; font-size: 11px; letter-spacing:0.03em; color: var(--sage);
+    border:1px solid var(--sage); border-radius:999px; padding: 2px 9px; font-family:'Special Elite',monospace;
+  }
+  .rp-card h4{ font-size: 17px; line-height:1.25; }
+  .rp-card .author{ font-size: 13px; color: var(--ink-soft); font-style: italic; }
+  .rp-card .meta{ margin-top:auto; font-size:12px; color: var(--ink-soft); display:flex; justify-content:space-between; align-items:center; }
+  .rp-stars{ letter-spacing: 1px; color: var(--stamp); font-size: 13px; }
+
+  .rp-empty{
+    border: 1.5px dashed var(--line); border-radius: 4px; padding: 40px 24px; text-align:center;
+    color: var(--ink-soft); font-size:15px;
+  }
+
+  /* ---------- Modal ---------- */
+  .rp-modal-backdrop{
+    position:fixed; inset:0; background: rgba(32,29,22,0.55); display:flex; align-items:flex-start;
+    justify-content:center; padding: 40px 16px; overflow-y:auto; z-index:50;
+  }
+  .rp-modal{
+    background: var(--paper-light); border-radius: 5px; max-width: 620px; width:100%;
+    padding: 30px; border: 1px solid var(--ink); position:relative;
+  }
+  .rp-modal-close{
+    position:absolute; top:16px; right:18px; background:none; border:none; font-size:20px; color: var(--ink-soft);
+  }
+  .rp-modal h2{ font-size: 24px; margin-bottom:4px; }
+  .rp-modal .author{ color: var(--ink-soft); font-style:italic; margin-bottom: 14px; display:block; }
+  .rp-modal .synopsis{ font-size: 15px; line-height:1.6; color: var(--ink); margin-bottom: 18px; }
+  .rp-divider{ border:none; border-top: 1px dashed var(--line); margin: 20px 0; }
+
+  /* ---------- Stamp entries (opinions / community feed) ---------- */
+  .rp-stamp-entry-wrap{ margin-bottom: 12px; }
+  .rp-stamp-entry{
+    border: 1px solid var(--line); border-radius: 3px 3px 0 0; padding: 12px 14px;
+    display:flex; gap:12px; align-items:flex-start; background: var(--paper);
+  }
+  .rp-stamp-entry-wrap:has(.rp-comments) .rp-stamp-entry{ border-radius: 3px; }
+  .rp-stamp-badge{
+    flex-shrink:0; width:46px; height:46px; border-radius:50%; border:2px solid var(--stamp);
+    color: var(--stamp); display:flex; align-items:center; justify-content:center;
+    font-family:'Special Elite',monospace; font-size:11px; transform: rotate(-6deg);
+    opacity:0.85;
+  }
+  .rp-stamp-entry .body{ flex:1; }
+  .rp-stamp-entry .who{ font-size:13.5px; font-weight:600; }
+  .rp-stamp-entry .when{ font-size:11.5px; color:var(--ink-soft); font-family:'Special Elite',monospace; }
+  .rp-stamp-entry .opinion{ font-size:14.5px; margin-top:5px; line-height:1.5; }
+  .rp-stamp-entry .on-book{ font-size:12.5px; color: var(--ink-soft); margin-top:2px; }
+  .rp-stamp-entry .on-book b{ color: var(--ink); font-weight:600; }
+
+  .rp-interact{ display:flex; gap:14px; margin-top:9px; align-items:center; flex-wrap:wrap; }
+  .rp-like-btn, .rp-comment-toggle, .rp-entry-del{
+    background:none; border:none; padding:0; font-size:13px; color: var(--ink-soft);
+  }
+  .rp-entry-del:hover{ color: var(--stamp); text-decoration:underline; }
+  .rp-like-btn.on{ color: var(--stamp); font-weight:600; }
+  .rp-like-btn:hover, .rp-comment-toggle:hover{ color: var(--ink); }
+  .rp-like-btn:disabled{ opacity:0.5; cursor:default; }
+  .rp-like-btn:disabled:hover{ color: var(--ink-soft); }
+
+  /* ---------- Avatars ---------- */
+  .rp-avatar{ border-radius:50%; object-fit:cover; flex-shrink:0; vertical-align:middle; display:inline-block; }
+  .rp-avatar-fallback{
+    background: var(--navy); color: var(--paper-light); display:inline-flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:600;
+  }
+  .rp-who-avatar{ display:inline-flex; vertical-align:middle; margin-right:6px; }
+  .rp-comments{
+    border: 1px solid var(--line); border-top:none; border-radius: 0 0 3px 3px;
+    background: var(--paper-light); padding: 10px 14px 12px 14px;
+  }
+  .rp-comment{ font-size: 13.5px; padding: 5px 0; border-bottom: 1px dashed var(--line-soft); }
+  .rp-comment:last-of-type{ border-bottom:none; }
+  .rp-comment .who{ font-weight:600; margin-right:6px; }
+  .rp-comment-form{ display:flex; gap:8px; margin-top:8px; }
+  .rp-comment-form input{
+    flex:1; padding: 7px 10px; border:1px solid var(--line); border-radius:3px; font-size:13.5px;
+    background: var(--paper-light);
+  }
+  .rp-comment-form button{
+    background: var(--navy); color: var(--paper-light); border:none; border-radius:3px;
+    padding: 6px 14px; font-size:13px;
+  }
+
+  /* ---------- Recommendations ---------- */
+  .rp-recs{ margin-bottom: 26px; }
+  .rp-recs h3{ font-size: 16px; margin-bottom: 4px; }
+  .rp-recs .why{ font-size: 13px; color: var(--ink-soft); margin-bottom: 12px; }
+  .rp-recs .rp-grid{ grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); }
+
+  /* ---------- Rating input ---------- */
+  .rp-rate{ display:flex; gap:6px; margin-bottom:14px; }
+  .rp-rate button{
+    background:none; border:1px solid var(--line); border-radius:3px; width:38px; height:38px;
+    font-size:18px; color: var(--line);
+  }
+  .rp-rate button.on{ color: var(--stamp); border-color: var(--stamp); }
+
+  /* ---------- Passport bio page ---------- */
+  .rp-bio{
+    border: 2px solid var(--navy); border-radius: 5px; padding: 22px 26px; background: var(--paper-light);
+    display:flex; justify-content:space-between; align-items:center; margin-bottom: 26px; flex-wrap:wrap; gap:14px;
+  }
+  .rp-bio-left{ display:flex; align-items:center; gap:16px; }
+  .rp-bio .avatar-wrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .rp-bio .avatar-wrap .rp-avatar{ border:2px solid var(--navy); }
+  .rp-bio .avatar-wrap label{
+    font-size:11px; color: var(--stamp); text-decoration:underline; cursor:pointer; font-family:'Special Elite',monospace;
+  }
+  .rp-bio .eyebrow{ font-family:'Special Elite',monospace; font-size:11px; color: var(--ink-soft); margin-bottom:4px; }
+  .rp-bio h2{ font-size: 26px; }
+  .rp-bio .cls{ color: var(--ink-soft); font-size:15px; margin-top:2px; }
+  .rp-bio .count{ text-align:right; }
+  .rp-bio .count .num{ font-family:'Fraunces',serif; font-size: 34px; color: var(--stamp); line-height:1; }
+  .rp-bio .count .lbl{ font-size: 11.5px; color: var(--ink-soft); font-family:'Special Elite',monospace; }
+
+  /* ---------- Recently read strip ---------- */
+  .rp-recent{ margin-bottom: 24px; }
+  .rp-recent h3{ font-size: 16px; margin-bottom: 10px; }
+  .rp-recent-strip{ display:flex; gap:14px; overflow-x:auto; padding-bottom:8px; }
+  .rp-recent-strip .rp-card{ min-width: 165px; max-width: 165px; flex-shrink:0; }
+  .rp-recent-strip .rp-card-click{ min-height: 140px; padding:12px; }
+
+  /* ---------- Staff desk ---------- */
+  .rp-staff-grid{ display:grid; grid-template-columns: 340px 1fr; gap: 26px; align-items:flex-start; }
+  @media (max-width: 760px){ .rp-staff-grid{ grid-template-columns: 1fr; } }
+  .rp-stats{ display:flex; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+  .rp-stat{
+    border:1px solid var(--line); border-radius:4px; padding: 12px 16px; background: var(--paper-light); min-width: 110px;
+  }
+  .rp-stat .num{ font-family:'Fraunces',serif; font-size: 24px; color: var(--navy); }
+  .rp-stat .lbl{ font-size: 11.5px; color: var(--ink-soft); font-family:'Special Elite',monospace; }
+  table.rp-table{ width:100%; border-collapse: collapse; font-size: 14px; }
+  table.rp-table th{
+    text-align:left; font-family:'Special Elite',monospace; font-size:11px; color: var(--ink-soft);
+    border-bottom: 1.5px solid var(--ink); padding: 6px 8px; font-weight:normal;
+  }
+  table.rp-table td{ padding: 9px 8px; border-bottom: 1px solid var(--line-soft); vertical-align:top; }
+  table.rp-table tr:hover td{ background: var(--paper-light); }
+  .rp-del{ background:none; border:none; color: var(--stamp); font-size:12.5px; text-decoration:underline; }
+  .rp-del-confirm{ display:flex; gap:8px; align-items:center; white-space:nowrap; }
+  .rp-del-confirm span{ font-size:12px; color: var(--ink-soft); }
+  .rp-del-yes{ background:none; border:none; color: var(--stamp); font-size:12.5px; font-weight:600; text-decoration:underline; }
+  .rp-del-no{ background:none; border:none; color: var(--ink-soft); font-size:12.5px; text-decoration:underline; }
+
+  .rp-toast{
+    position:fixed; bottom: 22px; left:50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper-light); padding: 10px 20px; border-radius: 4px;
+    font-size: 14px; z-index: 60; opacity:0; pointer-events:none; transition: opacity .25s ease, transform .25s ease;
+  }
+  .rp-toast.show{ opacity:1; transform: translateX(-50%) translateY(-6px); }
+
+  .rp-loading{ padding: 60px 0; text-align:center; color: var(--ink-soft); font-family:'Special Elite',monospace; font-size:13px; }
+</style>
+</head>
+<body>
+<div id="app"><div class="rp-loading">Opening the archives…</div></div>
+
+<div class="rp-toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var GENRES = ["Fiction","Non-Fiction","Fantasy","Science Fiction","Mystery","Romance","Biography","History","Science","Poetry","Graphic Novel","Horror","Adventure"];
+
+  var STAFF_PIN = "122333";
+
+  var state = {
+    role: null,            // 'student' | 'staff'
+    profile: null,         // {id,name,cls}
+    books: [],
+    profiles: [],
+    logs: [],
+    images: {},            // bookId -> dataURL
+    avatars: {},            // profileId -> dataURL
+    favorites: {},          // profileId -> [bookId,...]
+    page: 'catalog',
+    genreFilter: 'All',
+    search: '',
+    modalBookId: null,
+    loaded: false,
+    pendingStaffPin: false,
+    pendingImageData: null,  // holds a staged book-cover dataURL while filling the add-book form
+    pendingAvatarData: null, // holds a staged avatar dataURL while creating a profile
+    confirmDeleteId: null,   // book id awaiting inline delete confirmation
+    confirmDeleteLogId: null,// stamp id awaiting inline delete confirmation
+    expandedComments: {}     // logId -> bool, whether its comment thread is open
+  };
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function fmtDate(iso){
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+  }
+
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+
+  // ---------- shared Supabase storage ----------
+  const SUPABASE_URL = "https://pmxmjlkhtncliuaaownh.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_NDirVkIMTuYEO9vJP9yakw_eDexA4sK";
+  const SB_HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json"
+  };
+
+  async function sbFetch(path, options={}){
+    const response = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
+      ...options,
+      headers: { ...SB_HEADERS, ...(options.headers || {}) }
+    });
+    if(!response.ok){
+      const detail = await response.text().catch(() => "");
+      throw new Error("Supabase " + response.status + ": " + detail);
+    }
+    return response;
+  }
+
+  async function loadTable(table){
+    const response = await sbFetch(table + "?select=id,data&order=created_at.asc");
+    return await response.json();
+  }
+
+  async function loadAll(){
+    try{
+      const [books, profiles, logs, images, avatars, favorites] = await Promise.all([
+        loadTable("rp_books"), loadTable("rp_profiles"), loadTable("rp_logs"),
+        loadTable("rp_images"), loadTable("rp_avatars"), loadTable("rp_favorites")
+      ]);
+      state.books = books.map(row => row.data);
+      state.profiles = profiles.map(row => row.data);
+      state.logs = logs.map(row => row.data);
+      state.images = Object.fromEntries(images.map(row => [row.id, row.data]));
+      state.avatars = Object.fromEntries(avatars.map(row => [row.id, row.data]));
+      state.favorites = Object.fromEntries(favorites.map(row => [row.id, row.data]));
+      state.loaded = true;
+    }catch(e){
+      console.error("Supabase load failed:", e);
+      state.books=[]; state.profiles=[]; state.logs=[];
+      state.images={}; state.avatars={}; state.favorites={};
+      state.loaded=true;
+      showToast("Could not connect to the shared database.");
+    }
+  }
+
+  async function replaceTable(table, rows){
+    await sbFetch(table, {method:"DELETE", headers:{"Prefer":"return=minimal"}});
+    if(rows.length){
+      await sbFetch(table, {
+        method:"POST",
+        headers:{"Prefer":"return=minimal"},
+        body:JSON.stringify(rows)
+      });
+    }
+    return true;
+  }
+
+  async function saveBooks(){
+    try{ await replaceTable("rp_books", state.books.map(x=>({id:String(x.id),data:x}))); return true; }
+    catch(e){ console.error(e); showToast("Could not save books to the shared database."); return false; }
+  }
+  async function saveProfiles(){
+    try{ await replaceTable("rp_profiles", state.profiles.map(x=>({id:String(x.id),data:x}))); return true; }
+    catch(e){ console.error(e); showToast("Could not save profiles to the shared database."); return false; }
+  }
+  async function saveLogs(){
+    try{ await replaceTable("rp_logs", state.logs.map(x=>({id:String(x.id),data:x}))); return true; }
+    catch(e){ console.error(e); showToast("Could not save logs to the shared database."); return false; }
+  }
+  async function saveImages(){
+    try{ await replaceTable("rp_images", Object.entries(state.images).map(([id,data])=>({id:String(id),data}))); return true; }
+    catch(e){ console.error(e); showToast("Could not save cover images to the shared database."); return false; }
+  }
+  async function saveAvatars(){
+    try{ await replaceTable("rp_avatars", Object.entries(state.avatars).map(([id,data])=>({id:String(id),data}))); return true; }
+    catch(e){ console.error(e); showToast("Could not save avatars to the shared database."); return false; }
+  }
+  async function saveFavorites(){
+    try{ await replaceTable("rp_favorites", Object.entries(state.favorites).map(([id,data])=>({id:String(id),data}))); return true; }
+    catch(e){ console.error(e); showToast("Could not save favorites to the shared database."); return false; }
+  }
+
+
+
+  // ---------- derived helpers ----------
+  function genresInUse(){
+    var set = {};
+    state.books.forEach(function(b){ set[b.genre] = true; });
+    return Object.keys(set).sort();
+  }
+  function logsForBook(bookId){
+    return state.logs.filter(function(l){ return l.bookId === bookId; }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  }
+  function avgRating(bookId){
+    var ls = logsForBook(bookId);
+    if(!ls.length) return null;
+    var sum = ls.reduce(function(s,l){ return s+l.rating; },0);
+    return sum/ls.length;
+  }
+  function starString(n){
+    n = Math.round(n);
+    return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0, 5-n);
+  }
+  function likeCountOf(l){ return (l.likes||[]).length; }
+  function hasLiked(l){ return state.role==='student' && !!state.profile && (l.likes||[]).indexOf(state.profile.id) !== -1; }
+
+  function avatarHtml(profileId, name, sizePx){
+    var src = state.avatars[profileId];
+    var style = 'width:'+sizePx+'px;height:'+sizePx+'px;';
+    if(src) return '<img src="'+src+'" class="rp-avatar" style="'+style+'">';
+    var initial = (name || '?').trim().charAt(0).toUpperCase();
+    return '<div class="rp-avatar rp-avatar-fallback" style="'+style+'font-size:'+Math.round(sizePx*0.42)+'px;">'+escapeHtml(initial)+'</div>';
+  }
+
+  function isFavorited(bookId){
+    if(state.role !== 'student' || !state.profile) return false;
+    return (state.favorites[state.profile.id]||[]).indexOf(bookId) !== -1;
+  }
+
+  async function shareBook(bookId){
+    var b = state.books.find(function(x){ return x.id === bookId; });
+    if(!b) return;
+    var text = b.title+' by '+b.author+' ('+b.genre+')'+(b.synopsis ? '\n'+b.synopsis : '')+'\n\nFound on our library catalog — Reading Passport.';
+    if(navigator.share){
+      try{ await navigator.share({title: b.title, text: text}); return; }
+      catch(err){ if(err && err.name === 'AbortError') return; }
+    }
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard — paste it anywhere to share.');
+      return;
+    }catch(e){}
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Copied to clipboard — paste it anywhere to share.');
+    }catch(e2){
+      showToast('Could not copy automatically — select and copy the title manually.');
+    }
+  }
+
+  function renderLogEntry(l, showBook){
+    var comments = l.comments || [];
+    var expanded = !!state.expandedComments[l.id];
+    var canInteract = state.role === 'student' && state.profile;
+    var canDelete = (state.role === 'student' && state.profile && state.profile.id === l.profileId) || state.role === 'staff';
+    var interact = '<div class="rp-interact">'+
+      '<button class="rp-like-btn '+(hasLiked(l)?'on':'')+'" data-action="toggle-like" data-id="'+l.id+'"'+(canInteract?'':' disabled')+'>'+
+      (hasLiked(l)?'♥':'♡')+' '+likeCountOf(l)+'</button>'+
+      '<button class="rp-comment-toggle" data-action="toggle-comments" data-id="'+l.id+'">'+comments.length+' comment'+(comments.length===1?'':'s')+'</button>'+
+      (canDelete ? (
+        state.confirmDeleteLogId === l.id ?
+        '<span class="rp-del-confirm"><span>Delete this stamp?</span>'+
+          '<button class="rp-del-yes" data-action="confirm-delete-log" data-id="'+l.id+'">Yes</button>'+
+          '<button class="rp-del-no" data-action="cancel-delete-log" data-id="'+l.id+'">Cancel</button></span>' :
+        '<button class="rp-entry-del" data-action="delete-log" data-id="'+l.id+'">'+(state.role==='staff' && (!state.profile || state.profile.id!==l.profileId) ? 'Remove (staff)' : 'Delete')+'</button>'
+      ) : '')+
+      '</div>';
+    var commentsPanel = '';
+    if(expanded){
+      commentsPanel = '<div class="rp-comments">'+
+        (comments.length ? comments.map(function(c){
+          return '<div class="rp-comment"><span class="who">'+escapeHtml(c.profileName)+'</span><span class="txt">'+escapeHtml(c.text)+'</span></div>';
+        }).join('') : '<div style="font-size:13px;color:var(--ink-soft);">No comments yet.</div>')+
+        (canInteract ? '<div class="rp-comment-form"><input type="text" id="comment-input-'+l.id+'" placeholder="Add a comment…" maxlength="240">'+
+          '<button data-action="post-comment" data-id="'+l.id+'">Post</button></div>' :
+          '<div style="font-size:12px;color:var(--ink-soft);margin-top:8px;">Log in as a student to comment.</div>')+
+        '</div>';
+    }
+    return '<div class="rp-stamp-entry-wrap"><div class="rp-stamp-entry">'+
+      '<div class="rp-stamp-badge">'+l.rating+'/5</div>'+
+      '<div class="body"><div class="who">'+avatarHtml(l.profileId, l.profileName, 22)+' '+escapeHtml(l.profileName)+' <span style="font-weight:400;color:var(--ink-soft);">— Class '+escapeHtml(l.profileClass)+'</span></div>'+
+      (showBook ?
+        '<div class="on-book">stamped <b>'+escapeHtml(l.bookTitle)+'</b> <span class="when">'+fmtDate(l.date)+'</span></div>' :
+        '<div class="when">'+fmtDate(l.date)+'</div>')+
+      (l.opinion ? '<div class="opinion">'+escapeHtml(l.opinion)+'</div>' : '')+
+      interact+
+      '</div></div>'+commentsPanel+'</div>';
+  }
+
+  // ---------- render root ----------
+  function render(){
+    var app = document.getElementById('app');
+    if(!state.loaded){
+      app.innerHTML = '<div class="rp-loading">Opening the archives…</div>';
+      return;
+    }
+    var html = '';
+    html += renderHeader();
+    if(!state.role){
+      html += state.pendingStaffPin ? renderStaffPinGate() : renderOnboarding();
+    } else if(state.role === 'student' && !state.profile){
+      html += renderStudentProfilePicker();
+    } else {
+      html += renderNav();
+      if(state.page === 'catalog') html += renderCatalog();
+      else if(state.page === 'community') html += renderCommunity();
+      else if(state.page === 'mine') html += renderMyPassport();
+      else if(state.page === 'staff') html += renderStaffDesk();
+    }
+    app.innerHTML = html;
+    if(state.modalBookId) renderModal();
+    bindEvents();
+  }
+
+  function renderHeader(){
+    var whoBlock = '';
+    if(state.role === 'student' && state.profile){
+      whoBlock = '<div class="rp-who">'+avatarHtml(state.profile.id, state.profile.name, 32)+
+        '<span style="display:inline-block;vertical-align:middle;margin-left:8px;"><span class="name">'+escapeHtml(state.profile.name)+'</span>Class '+escapeHtml(state.profile.cls)+'</span>'+
+        '<br><button class="rp-switch" data-action="switch-role">Not you? Switch</button></div>';
+    } else if(state.role === 'staff'){
+      whoBlock = '<div class="rp-who"><span class="name">Staff desk</span>Librarian access'+
+        '<br><button class="rp-switch" data-action="switch-role">Switch role</button></div>';
+    }
+    return '<div class="rp-header">'+
+      '<div class="rp-brand"><div class="rp-mark">'+markSvg()+'</div>'+
+      '<div class="rp-brand-text"><h1>Reading Passport</h1><div class="sub">SCHOOL LIBRARY · No.'+String(state.books.length).padStart(3,'0')+'</div></div></div>'+
+      whoBlock+
+      '</div>';
+  }
+
+  function markSvg(){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="'+ '#202C40' +'" stroke-width="1.5"><path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4z"/><path d="M11 4v14"/><path d="M14 8h3M14 11h3M14 14h3"/></svg>';
+  }
+
+  function renderOnboarding(){
+    return '<div class="rp-onboard">'+
+      '<p class="lede">Every book has a story of who read it. Log in as a reader to share what you\'re reading, or as staff to stock the shelves.</p>'+
+      '<div class="rp-gates">'+
+        '<div class="rp-gate"><h3>I\'m a student</h3><p>Browse the catalog, and share your rating and thoughts on what you\'re reading right now.</p>'+
+          '<button data-action="role-student">Open my passport</button></div>'+
+        '<div class="rp-gate"><h3>I\'m a teacher or admin</h3><p>Add books to the library catalog and keep the collection up to date.</p>'+
+          '<button data-action="ask-staff-pin">Go to the staff desk</button></div>'+
+      '</div></div>';
+  }
+
+  function renderStaffPinGate(){
+    return '<div class="rp-onboard">'+
+      '<div class="rp-panel" style="max-width:360px;"><h4>Staff PIN</h4>'+
+      '<p style="color:var(--ink-soft); font-size:13.5px; margin:-6px 0 14px;">Ask your librarian or admin for the access PIN.</p>'+
+      '<div class="rp-field"><input id="staff-pin-input" type="password" inputmode="numeric" placeholder="Enter PIN" maxlength="12" autofocus></div>'+
+      '<div style="display:flex; gap:10px;">'+
+      '<button class="rp-btn" data-action="submit-staff-pin">Enter</button>'+
+      '<button class="rp-btn secondary" data-action="cancel-staff-pin">Back</button>'+
+      '</div></div></div>';
+  }
+
+  function renderStudentProfilePicker(){
+    var list = state.profiles.slice().sort(function(a,b){ return a.name.localeCompare(b.name); });
+    var listHtml = list.length ? list.map(function(p){
+      return '<div class="rp-profile-pick"><span>'+avatarHtml(p.id, p.name, 28)+' <span style="margin-left:8px;">'+escapeHtml(p.name)+' — Class '+escapeHtml(p.cls)+'</span></span>'+
+        '<button data-action="pick-profile" data-id="'+p.id+'">That\'s me</button></div>';
+    }).join('') : '<p style="color:var(--ink-soft); font-size:14px;">No readers registered yet — be the first below.</p>';
+
+    return '<div class="rp-onboard">'+
+      '<div class="rp-panel"><h4>Find your name</h4><div class="rp-profile-list">'+listHtml+'</div></div>'+
+      '<div class="rp-panel"><h4>New reader? Create your passport</h4>'+
+        '<div class="rp-field"><label>Name</label><input id="np-name" type="text" placeholder="e.g. Sari Wulandari" maxlength="60"></div>'+
+        '<div class="rp-field"><label>Class</label><input id="np-cls" type="text" placeholder="e.g. XI IPA 2" maxlength="30"></div>'+
+        '<div class="rp-field"><label>Profile photo (optional)</label><input id="np-avatar" type="file" accept="image/*">'+
+        '<div id="np-avatar-preview" style="margin-top:8px;"></div></div>'+
+        '<button class="rp-btn" data-action="create-profile">Create my passport</button>'+
+      '</div></div>';
+  }
+
+  function renderNav(){
+    var tabs = [['catalog','Catalog']];
+    if(state.role === 'student'){
+      tabs.push(['community','Community Shelf']);
+      tabs.push(['mine','My Passport']);
+    } else {
+      tabs.push(['staff','Staff Desk']);
+      tabs.push(['community','Community Shelf']);
+    }
+    return '<div class="rp-nav">'+tabs.map(function(t){
+      return '<button class="'+(state.page===t[0]?'active':'')+'" data-action="nav" data-page="'+t[0]+'">'+t[1]+'</button>';
+    }).join('')+'</div>';
+  }
+
+  function bookCard(b){
+    var avg = avgRating(b.id);
+    var count = logsForBook(b.id).length;
+    var cover = state.images[b.id];
+    var showFav = state.role === 'student' && !!state.profile;
+    var fav = isFavorited(b.id);
+    var actions = '<div class="rp-card-actions">'+
+      (showFav ? '<button class="rp-fav-btn '+(fav?'on':'')+'" data-action="toggle-favorite" data-id="'+b.id+'" title="'+(fav?'Remove from favorites':'Add to favorites')+'">'+(fav?'★':'☆')+'</button>' : '')+
+      '<button class="rp-share-btn" data-action="share-book" data-id="'+b.id+'" title="Share this book">↗</button>'+
+      '</div>';
+    return '<div class="rp-card">'+actions+
+      '<button class="rp-card-click" data-action="open-book" data-id="'+b.id+'">'+
+      (cover ? '<img src="'+cover+'" class="rp-cover">' : '')+
+      '<span class="tag">'+escapeHtml(b.genre)+'</span>'+
+      '<h4>'+escapeHtml(b.title)+'</h4>'+
+      '<span class="author">'+escapeHtml(b.author)+'</span>'+
+      '<div class="meta"><span>'+(count ? count+' reader share'+(count===1?'':'s') : 'No shares yet')+'</span>'+
+      (avg ? '<span class="rp-stars">'+starString(avg)+'</span>' : '')+
+      '</div></button></div>';
+  }
+
+  function recentlyReadBooks(limit){
+    var seen = {}; var result = [];
+    state.logs.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); }).forEach(function(l){
+      if(seen[l.bookId]) return;
+      var bk = state.books.find(function(b){ return b.id === l.bookId; });
+      if(!bk) return;
+      seen[l.bookId] = true;
+      result.push(bk);
+    });
+    return result.slice(0, limit);
+  }
+
+  function renderCatalog(){
+    var genres = ['All'].concat(genresInUse());
+    var q = state.search.trim().toLowerCase();
+    var filtered = state.books.filter(function(b){
+      var genreOk = state.genreFilter === 'All' || b.genre === state.genreFilter;
+      var searchOk = !q || (b.title+' '+b.author).toLowerCase().indexOf(q) !== -1;
+      return genreOk && searchOk;
+    });
+    var grid = filtered.length ?
+      '<div class="rp-grid">'+filtered.map(bookCard).join('')+'</div>' :
+      '<div class="rp-empty">'+(state.books.length ? 'No titles match that search or genre.' : 'The shelves are empty. Ask a teacher to add the first book at the Staff Desk.')+'</div>';
+
+    var recent = recentlyReadBooks(8);
+    var recentBlock = recent.length ?
+      '<div class="rp-recent"><h3>Recently Read</h3><div class="rp-recent-strip">'+recent.map(bookCard).join('')+'</div></div>' : '';
+
+    return '<div>'+recentBlock+
+      '<div class="rp-toolbar"><input class="rp-search" id="search-input" type="text" placeholder="Search by title or author…" value="'+escapeHtml(state.search)+'"></div>'+
+      '<div class="rp-genres">'+genres.map(function(g){
+        return '<button class="rp-genre-tab '+(state.genreFilter===g?'active':'')+'" data-action="set-genre" data-genre="'+escapeHtml(g)+'">'+escapeHtml(g)+'</button>';
+      }).join('')+'</div>'+
+      grid+
+      '</div>';
+  }
+
+  function renderCommunity(){
+    var ls = state.logs.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+    var body = ls.length ? ls.map(function(l){ return renderLogEntry(l, true); }).join('') :
+      '<div class="rp-empty">No reader shares yet. Once someone stamps a book, it\'ll show up here for the whole class to see.</div>';
+    return '<div><h2 style="margin-bottom:16px;">Community Shelf</h2>'+body+'</div>';
+  }
+
+  function renderRecommendations(mine){
+    if(!mine.length){
+      return '<div class="rp-recs"><div class="rp-empty">Log a book to get recommendations picked for you.</div></div>';
+    }
+    var genreCount = {};
+    mine.forEach(function(l){
+      var bk = state.books.find(function(b){ return b.id === l.bookId; });
+      if(bk) genreCount[bk.genre] = (genreCount[bk.genre]||0) + 1;
+    });
+    var genreNames = Object.keys(genreCount);
+    if(!genreNames.length) return '';
+    var topGenre = genreNames.sort(function(a,b){ return genreCount[b]-genreCount[a]; })[0];
+    var readIds = {};
+    mine.forEach(function(l){ readIds[l.bookId] = true; });
+    var recs = state.books.filter(function(b){ return b.genre === topGenre && !readIds[b.id]; }).slice(0,4);
+
+    if(!recs.length){
+      return '<div class="rp-recs"><h3>Recommended for you</h3>'+
+        '<div class="why">You\'ve stamped the most '+escapeHtml(topGenre)+' books — looks like you\'ve read everything we have in that genre. Ask your librarian to add more!</div></div>';
+    }
+    return '<div class="rp-recs"><h3>Recommended for you</h3>'+
+      '<div class="why">Because you\'ve read the most '+escapeHtml(topGenre)+' books</div>'+
+      '<div class="rp-grid">'+recs.map(bookCard).join('')+'</div></div>';
+  }
+
+  function renderFavoritesSection(){
+    var favIds = state.favorites[state.profile.id] || [];
+    var favBooks = favIds.map(function(id){ return state.books.find(function(b){ return b.id === id; }); }).filter(Boolean);
+    if(!favBooks.length){
+      return '<div class="rp-recs"><h3>My Favorites</h3><div class="rp-empty">Tap the star (☆) on any book in the catalog to save it here.</div></div>';
+    }
+    return '<div class="rp-recs"><h3>My Favorites</h3><div class="rp-grid">'+favBooks.map(bookCard).join('')+'</div></div>';
+  }
+
+  function renderMyPassport(){
+    var mine = state.logs.filter(function(l){ return l.profileId === state.profile.id; }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+    var bio = '<div class="rp-bio"><div class="rp-bio-left">'+
+      '<div class="avatar-wrap">'+avatarHtml(state.profile.id, state.profile.name, 64)+
+      '<label>Change photo<input type="file" id="avatar-edit-input" accept="image/*" style="display:none;"></label></div>'+
+      '<div><div class="eyebrow">READER PASSPORT</div><h2>'+escapeHtml(state.profile.name)+'</h2>'+
+      '<div class="cls">Class '+escapeHtml(state.profile.cls)+'</div></div></div>'+
+      '<div class="count"><div class="num">'+mine.length+'</div><div class="lbl">BOOKS STAMPED</div></div></div>';
+    var favs = renderFavoritesSection();
+    var recs = renderRecommendations(mine);
+    var body = mine.length ?
+      '<h3 style="margin-bottom:12px;">My Stamps</h3>'+mine.map(function(l){ return renderLogEntry(l, true); }).join('') :
+      '<div class="rp-empty">Your passport is blank so far. Open a book in the catalog and stamp your first entry.</div>';
+    return '<div>'+bio+favs+recs+body+'</div>';
+  }
+
+  function renderStaffDesk(){
+    var totalShares = state.logs.length;
+    var genreCounts = {};
+    state.books.forEach(function(b){ genreCounts[b.genre] = (genreCounts[b.genre]||0)+1; });
+    var topGenre = Object.keys(genreCounts).sort(function(a,b){ return genreCounts[b]-genreCounts[a]; })[0] || '—';
+
+    var options = GENRES.concat(genresInUse().filter(function(g){ return GENRES.indexOf(g)===-1; }));
+    var seen = {};
+    options = options.filter(function(g){ if(seen[g]) return false; seen[g]=true; return true; }).sort();
+
+    var form = '<div class="rp-panel"><h4>Add a book to the catalog</h4>'+
+      '<div class="rp-field"><label>Title</label><input id="b-title" type="text" placeholder="e.g. Laskar Pelangi" maxlength="120"></div>'+
+      '<div class="rp-field"><label>Author</label><input id="b-author" type="text" placeholder="e.g. Andrea Hirata" maxlength="80"></div>'+
+      '<div class="rp-field"><label>Genre</label><select id="b-genre">'+
+        options.map(function(g){ return '<option value="'+escapeHtml(g)+'">'+escapeHtml(g)+'</option>'; }).join('')+
+        '<option value="__custom">Other — type new genre</option></select></div>'+
+      '<div class="rp-field" id="custom-genre-wrap" style="display:none;"><label>New genre name</label><input id="b-genre-custom" type="text" maxlength="30"></div>'+
+      '<div class="rp-field"><label>Synopsis (optional)</label><textarea id="b-synopsis" placeholder="A short description for students browsing the catalog…"></textarea></div>'+
+      '<div class="rp-field"><label>Cover image (optional)</label><input id="b-image" type="file" accept="image/*">'+
+      '<div id="b-image-preview" style="margin-top:8px;"></div></div>'+
+      '<button class="rp-btn" data-action="add-book">Add to catalog</button>'+
+      '</div>';
+
+    var rows = state.books.slice().sort(function(a,b){ return b.dateAdded.localeCompare(a.dateAdded); }).map(function(b){
+      var count = logsForBook(b.id).length;
+      var delCell = state.confirmDeleteId === b.id ?
+        '<span class="rp-del-confirm"><span>Remove?</span>'+
+        '<button class="rp-del-yes" data-action="confirm-delete-book" data-id="'+b.id+'">Yes</button>'+
+        '<button class="rp-del-no" data-action="cancel-delete-book" data-id="'+b.id+'">Cancel</button></span>' :
+        '<button class="rp-del" data-action="delete-book" data-id="'+b.id+'">Remove</button>';
+      return '<tr><td>'+escapeHtml(b.title)+'<br><span style="color:var(--ink-soft);font-size:12.5px;font-style:italic;">'+escapeHtml(b.author)+'</span></td>'+
+        '<td>'+escapeHtml(b.genre)+'</td><td>'+count+'</td>'+
+        '<td>'+delCell+'</td></tr>';
+    }).join('');
+
+    var table = state.books.length ?
+      '<table class="rp-table"><thead><tr><th>Title</th><th>Genre</th><th>Shares</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>' :
+      '<div class="rp-empty">No books in the catalog yet. Add the first title using the form.</div>';
+
+    return '<div class="rp-staff-grid"><div>'+form+'</div>'+
+      '<div><div class="rp-stats">'+
+        '<div class="rp-stat"><div class="num">'+state.books.length+'</div><div class="lbl">TITLES</div></div>'+
+        '<div class="rp-stat"><div class="num">'+totalShares+'</div><div class="lbl">READER SHARES</div></div>'+
+        '<div class="rp-stat"><div class="num" style="font-size:16px;padding-top:4px;">'+escapeHtml(topGenre)+'</div><div class="lbl">TOP GENRE</div></div>'+
+      '</div>'+table+'</div></div>';
+  }
+
+  function renderModal(){
+    var b = state.books.find(function(x){ return x.id === state.modalBookId; });
+    if(!b){ state.modalBookId = null; return; }
+    var entries = logsForBook(b.id);
+    var alreadyLogged = state.role === 'student' && state.profile && entries.some(function(l){ return l.profileId === state.profile.id; });
+
+    var formHtml = '';
+    if(state.role === 'student' && state.profile && !alreadyLogged){
+      formHtml = '<hr class="rp-divider"><h4 style="margin-bottom:10px;">Stamp this book</h4>'+
+        '<div class="rp-rate" id="rate-row">'+[1,2,3,4,5].map(function(n){ return '<button type="button" data-rate="'+n+'">'+n+'</button>'; }).join('')+'</div>'+
+        '<div class="rp-field"><textarea id="opinion-input" placeholder="What did you think? (optional)"></textarea></div>'+
+        '<button class="rp-btn" data-action="submit-log" data-rating="0">Share my stamp</button>';
+    } else if(state.role === 'student' && alreadyLogged){
+      formHtml = '<hr class="rp-divider"><p style="color:var(--ink-soft); font-size:14px;">You\'ve already stamped this book — thanks for sharing.</p>';
+    }
+
+    var entriesHtml = entries.length ?
+      '<hr class="rp-divider"><h4 style="margin-bottom:10px;">Reader shares ('+entries.length+')</h4>'+
+      entries.map(function(l){ return renderLogEntry(l, false); }).join('') : '';
+
+    var cover = state.images[b.id];
+    var fav = state.role === 'student' && state.profile ? isFavorited(b.id) : false;
+    var modalActions = '<div style="display:flex; gap:10px; margin:2px 0 14px;">'+
+      '<button class="rp-btn secondary" data-action="share-book" data-id="'+b.id+'">Share this book</button>'+
+      (state.role === 'student' && state.profile ?
+        '<button class="rp-btn secondary" data-action="toggle-favorite" data-id="'+b.id+'">'+(fav?'★ Favorited':'☆ Add to favorites')+'</button>' : '')+
+      '</div>';
+    var html = '<div class="rp-modal-backdrop" id="modal-backdrop">'+
+      '<div class="rp-modal"><button class="rp-modal-close" data-action="close-modal">&times;</button>'+
+      (cover ? '<img src="'+cover+'" class="rp-cover-modal">' : '')+
+      '<span class="tag">'+escapeHtml(b.genre)+'</span>'+
+      '<h2>'+escapeHtml(b.title)+'</h2><span class="author">'+escapeHtml(b.author)+'</span>'+
+      (b.synopsis ? '<p class="synopsis">'+escapeHtml(b.synopsis)+'</p>' : '')+
+      modalActions+
+      formHtml+entriesHtml+
+      '</div></div>';
+    var wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    document.getElementById('app').appendChild(wrap.firstChild);
+  }
+
+  // ---------- events ----------
+  function bindEvents(){
+    document.body.onclick = async function(e){
+      var el = e.target.closest('[data-action]');
+      if(!el) return;
+      var action = el.getAttribute('data-action');
+
+      if(action === 'role-student'){ state.role='student'; render(); }
+      else if(action === 'ask-staff-pin'){ state.pendingStaffPin = true; render(); var pi=document.getElementById('staff-pin-input'); if(pi) pi.focus(); }
+      else if(action === 'cancel-staff-pin'){ state.pendingStaffPin = false; render(); }
+      else if(action === 'submit-staff-pin'){
+        var pin = document.getElementById('staff-pin-input').value.trim();
+        if(pin === STAFF_PIN){
+          state.pendingStaffPin = false; state.role='staff'; state.page='staff'; render();
+        } else {
+          showToast('Incorrect PIN.');
+          var f = document.getElementById('staff-pin-input'); if(f){ f.value=''; f.focus(); }
+        }
+      }
+      else if(action === 'switch-role'){ state.role=null; state.profile=null; state.page='catalog'; state.pendingStaffPin=false; render(); }
+      else if(action === 'pick-profile'){
+        var id = el.getAttribute('data-id');
+        state.profile = state.profiles.find(function(p){ return p.id===id; });
+        state.page = 'catalog';
+        render();
+      }
+      else if(action === 'create-profile'){
+        var name = document.getElementById('np-name').value.trim();
+        var cls = document.getElementById('np-cls').value.trim();
+        if(!name || !cls){ showToast('Enter both name and class.'); return; }
+        var p = {id: uid(), name: name, cls: cls};
+        state.profiles.push(p);
+        await saveProfiles();
+        state.profile = p;
+        state.page = 'catalog';
+        render();
+      }
+      else if(action === 'nav'){ state.page = el.getAttribute('data-page'); render(); }
+      else if(action === 'set-genre'){ state.genreFilter = el.getAttribute('data-genre'); render(); }
+      else if(action === 'open-book'){ state.modalBookId = el.getAttribute('data-id'); render(); }
+      else if(action === 'close-modal'){ state.modalBookId = null; render(); }
+      else if(action === 'delete-book'){
+        state.confirmDeleteId = el.getAttribute('data-id');
+        render();
+      }
+      else if(action === 'cancel-delete-book'){
+        state.confirmDeleteId = null;
+        render();
+      }
+      else if(action === 'confirm-delete-book'){
+        var bid = el.getAttribute('data-id');
+        state.books = state.books.filter(function(b){ return b.id !== bid; });
+        state.confirmDeleteId = null;
+        await saveBooks();
+        if(state.images[bid]){ delete state.images[bid]; await saveImages(); }
+        showToast('Book removed from the catalog.');
+        render();
+      }
+      else if(action === 'add-book'){
+        var title = document.getElementById('b-title').value.trim();
+        var author = document.getElementById('b-author').value.trim();
+        var genreSel = document.getElementById('b-genre').value;
+        var genre = genreSel === '__custom' ? document.getElementById('b-genre-custom').value.trim() : genreSel;
+        var synopsis = document.getElementById('b-synopsis').value.trim();
+        if(!title || !author || !genre){ showToast('Title, author, and genre are required.'); return; }
+        var newId = uid();
+        state.books.push({id: newId, title: title, author: author, genre: genre, synopsis: synopsis, dateAdded: new Date().toISOString()});
+        await saveBooks();
+        if(state.pendingImageData){
+          state.images[newId] = state.pendingImageData;
+          state.pendingImageData = null;
+          await saveImages();
+        }
+        showToast('Added "'+title+'" to the catalog.');
+        render();
+      }
+      else if(action === 'submit-log'){
+        var rating = parseInt(el.getAttribute('data-rating'),10);
+        if(!rating){ showToast('Pick a rating from 1 to 5.'); return; }
+        var opinion = document.getElementById('opinion-input').value.trim();
+        var book = state.books.find(function(b){ return b.id === state.modalBookId; });
+        state.logs.push({
+          id: uid(), profileId: state.profile.id, profileName: state.profile.name, profileClass: state.profile.cls,
+          bookId: book.id, bookTitle: book.title, rating: rating, opinion: opinion, date: new Date().toISOString(),
+          likes: [], comments: []
+        });
+        await saveLogs();
+        showToast('Stamped! Thanks for sharing.');
+        render();
+      }
+      else if(action === 'toggle-like'){
+        if(state.role !== 'student' || !state.profile) return;
+        var lid = el.getAttribute('data-id');
+        var log = state.logs.find(function(x){ return x.id === lid; });
+        if(!log) return;
+        if(!log.likes) log.likes = [];
+        var idx = log.likes.indexOf(state.profile.id);
+        if(idx === -1) log.likes.push(state.profile.id); else log.likes.splice(idx,1);
+        await saveLogs();
+        render();
+      }
+      else if(action === 'toggle-comments'){
+        var cid = el.getAttribute('data-id');
+        state.expandedComments[cid] = !state.expandedComments[cid];
+        render();
+      }
+      else if(action === 'post-comment'){
+        if(state.role !== 'student' || !state.profile) return;
+        var pid = el.getAttribute('data-id');
+        var input = document.getElementById('comment-input-'+pid);
+        var text = input ? input.value.trim() : '';
+        if(!text) { showToast('Write something before posting.'); return; }
+        var plog = state.logs.find(function(x){ return x.id === pid; });
+        if(!plog) return;
+        if(!plog.comments) plog.comments = [];
+        plog.comments.push({id: uid(), profileId: state.profile.id, profileName: state.profile.name, text: text, date: new Date().toISOString()});
+        state.expandedComments[pid] = true;
+        await saveLogs();
+        render();
+      }
+    };
+
+    document.body.onkeydown = function(e){
+      if(e.key === 'Enter' && e.target.id === 'staff-pin-input'){
+        var btn = document.querySelector('[data-action="submit-staff-pin"]');
+        if(btn) btn.click();
+      }
+    };
+
+    document.body.onchange = async function(e){
+      if(e.target.id === 'b-image'){
+        var file = e.target.files && e.target.files[0];
+        var preview = document.getElementById('b-image-preview');
+        if(!file){ state.pendingImageData = null; if(preview) preview.innerHTML=''; return; }
+        if(!file.type.startsWith('image/')){ showToast('Please choose an image file.'); e.target.value=''; return; }
+        if(preview) preview.innerHTML = '<span style="font-size:12.5px;color:var(--ink-soft);">Processing image…</span>';
+        try{
+          var dataUrl = await fileToResizedDataUrl(file, 500, 0.75);
+          state.pendingImageData = dataUrl;
+          if(preview) preview.innerHTML = '<img src="'+dataUrl+'" style="height:90px;border:1px solid var(--ink);border-radius:3px;">';
+        }catch(err){
+          state.pendingImageData = null;
+          if(preview) preview.innerHTML = '<span style="font-size:12.5px;color:var(--stamp);">Could not read that image — try another file.</span>';
+        }
+      }
+    };
+
+    document.body.oninput = function(e){
+      if(e.target.id === 'search-input'){ state.search = e.target.value; render(); if(document.getElementById('search-input')){ var s=document.getElementById('search-input'); s.focus(); s.selectionStart=s.selectionEnd=s.value.length; } }
+      if(e.target.id === 'b-genre'){
+        var wrap = document.getElementById('custom-genre-wrap');
+        if(wrap) wrap.style.display = e.target.value === '__custom' ? 'block' : 'none';
+      }
+    };
+
+    var rateRow = document.getElementById('rate-row');
+    if(rateRow){
+      rateRow.querySelectorAll('button').forEach(function(btn){
+        btn.onclick = function(){
+          var n = parseInt(btn.getAttribute('data-rate'),10);
+          rateRow.querySelectorAll('button').forEach(function(b2,i){ b2.classList.toggle('on', i < n); });
+          var submitBtn = document.querySelector('[data-action="submit-log"]');
+          if(submitBtn) submitBtn.setAttribute('data-rating', n);
+        };
+      });
+    }
+
+    var backdrop = document.getElementById('modal-backdrop');
+    if(backdrop){
+      backdrop.addEventListener('click', function(e){ if(e.target === backdrop){ state.modalBookId = null; render(); } });
+    }
+  }
+
+  loadAll().then(render);
+})();
+</script>
+</body>
+</html>
